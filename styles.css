@@ -416,3 +416,24 @@ input.dateInput::-webkit-calendar-picker-indicator{ opacity:0.9; }
   padding:8px 12px;
   border-radius:10px;
 }
+
+/* custom event icon image */
+.eventIcon{
+  width:16px;
+  height:16px;
+  object-fit:contain;
+  vertical-align:-2px;
+}
+.emojiSmall.eventIcon{ width:14px; height:14px; }
+.emojiBtn.eventIcon{ width:28px; height:28px; }
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.12); }
+  70% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+.pop-anim{
+  animation: pop 220ms ease-out;
+  will-change: transform;
+}

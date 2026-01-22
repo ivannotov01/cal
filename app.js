@@ -342,7 +342,19 @@ window.__APP_OK__ = true;
     homeBtn.style.visibility = show ? 'visible' : 'hidden';
   }
 
-  // --- Overlay helpers ---
+  
+  // --- Micro animation (pop) ---
+  function popEl(el){
+    try{
+      if (!el) return;
+      el.classList.remove('pop-anim');
+      void el.offsetWidth;
+      el.classList.add('pop-anim');
+      setTimeout(()=>el.classList.remove('pop-anim'), 260);
+    }catch(e){}
+  }
+
+// --- Overlay helpers ---
   const showBackdrop = () => overlayBackdrop.classList.remove('hidden');
   const hideBackdrop = () => overlayBackdrop.classList.add('hidden');
 
@@ -542,7 +554,7 @@ window.__APP_OK__ = true;
     editingEventId = null;
     eventModalTitle.textContent = 'Новое событие';
     saveEventBtn.textContent = 'Добавить';
-    emojiPreview.textContent = '🙂';
+    setValuePreview(emojiPreview, CUSTOM_ICON_PLANE);
     titleInput.value = '';
     colorPreview.style.background = 'transparent';
     colorPreview.dataset.none = '1';
@@ -560,7 +572,7 @@ window.__APP_OK__ = true;
     editingEventId = ev.id;
     eventModalTitle.textContent = 'Редактировать';
     saveEventBtn.textContent = 'Сохранить';
-    emojiPreview.textContent = ev.emoji || '🙂';
+    setValuePreview(emojiPreview, ev.emoji || CUSTOM_ICON_PLANE);
     titleInput.value = ev.title || '';
     if (ev.color) { colorPreview.style.background = ev.color; colorPreview.dataset.none = '0'; }
     else { colorPreview.style.background = 'transparent'; colorPreview.dataset.none = '1'; }
@@ -640,7 +652,7 @@ window.__APP_OK__ = true;
   });
 
   saveEventBtn.addEventListener('click', () => {
-    const emoji = (emojiPreview.textContent || '🙂').trim();
+    const emoji = (emojiPreview.dataset.value || CUSTOM_ICON_PLANE);
     const title = titleInput.value.trim();
     if (!title) { titleInput.focus(); return; }
     const color = (colorPreview.dataset.none === '1') ? null : (rgbToHex(getComputedStyle(colorPreview).backgroundColor) || null);
@@ -678,7 +690,38 @@ window.__APP_OK__ = true;
     return `#${r}${g}${b}`.toUpperCase();
   }
 
-  // --- Emoji picker ---
+  
+  // --- Custom icon (test: plane only) ---
+  const ICON_VALUE_PREFIX = 'ic:';
+  const CUSTOM_ICON_PLANE = ICON_VALUE_PREFIX + 'plane';
+  function isIconValue(v){ return typeof v === 'string' && v.startsWith(ICON_VALUE_PREFIX); }
+  function iconSrcByValue(v){
+    if (v === CUSTOM_ICON_PLANE) return 'assets/event-icons/plane.png';
+    return null;
+  }
+  function makeValueNode(v, cls){
+    if (isIconValue(v)){
+      const img = document.createElement('img');
+      img.className = (cls || '') + ' eventIcon';
+      img.src = iconSrcByValue(v) || '';
+      img.alt = '';
+      img.draggable = false;
+      return img;
+    }
+    const sp = document.createElement('span');
+    sp.className = cls || 'emoji';
+    sp.textContent = v || '•';
+    return sp;
+  }
+  function setValuePreview(el, v){
+    if (!el) return;
+    const val = v || CUSTOM_ICON_PLANE;
+    el.dataset.value = val;
+    el.innerHTML = '';
+    el.appendChild(makeValueNode(val, 'emojiBtn'));
+  }
+
+// --- Emoji picker ---
   function topFrequent(n=12){
     const entries = Object.entries(state.emojiFreq).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
     const defaults = ['✅','🔥','💪','📌','🎯','🚗','🏠','🍽️','💼','🎉','❤️','📞'];
@@ -691,26 +734,25 @@ window.__APP_OK__ = true;
     return out;
   }
   function renderEmojiPicker(onPick){
+    // Only one custom icon for now (plane)
     emojiFrequent.innerHTML = '';
-    topFrequent(12).forEach(e => {
-      const b = document.createElement('button');
-      b.className = 'emoji-btn';
-      b.textContent = e;
-      b.addEventListener('click', () => onPick(e));
-      emojiFrequent.appendChild(b);
-    });
     emojiAll.innerHTML = '';
-    EMOJI_ALL.forEach(e => {
-      const b = document.createElement('button');
-      b.className = 'emoji-btn';
-      b.textContent = e;
-      b.addEventListener('click', () => onPick(e));
-      emojiAll.appendChild(b);
+    const b = document.createElement('button');
+    b.className = 'emoji-btn';
+    b.innerHTML = '';
+    b.appendChild(makeValueNode(CUSTOM_ICON_PLANE, 'emojiBtn'));
+    b.addEventListener('click', () => {
+      popEl(b);
+      onPick(CUSTOM_ICON_PLANE);
     });
+    emojiAll.appendChild(b);
   }
 
   emojiBtn.addEventListener('click', () => {
-    renderEmojiPicker((e) => { emojiPreview.textContent = e; closeModal(emojiPicker); });
+    renderEmojiPicker((v) => {
+      setValuePreview(emojiPreview, v);
+      closeModal(emojiPicker);
+    });
     openModal(emojiPicker);
   });
   closeEmojiBtn.addEventListener('click', () => closeModal(emojiPicker));
