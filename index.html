@@ -12,10 +12,10 @@
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="Календарь" name="apple-mobile-web-app-title"/>
 <link href="styles.css" rel="stylesheet"/>
-<link href="icons/icon-180.png?v=5fix33" rel="apple-touch-icon" sizes="180x180"/>
-<link href="icons/icon-167.png?v=5fix33" rel="apple-touch-icon" sizes="167x167"/>
-<link href="icons/icon-152.png?v=5fix33" rel="apple-touch-icon" sizes="152x152"/>
-<link href="icons/icon-120.png?v=5fix33" rel="apple-touch-icon" sizes="120x120"/>
+<link href="icons/icon-180.png?v=5fix34" rel="apple-touch-icon" sizes="180x180"/>
+<link href="icons/icon-167.png?v=5fix34" rel="apple-touch-icon" sizes="167x167"/>
+<link href="icons/icon-152.png?v=5fix34" rel="apple-touch-icon" sizes="152x152"/>
+<link href="icons/icon-120.png?v=5fix34" rel="apple-touch-icon" sizes="120x120"/>
 </head>
 <body>
 <div class="app" id="app">
@@ -118,6 +118,35 @@
 </div>
 <div class="settings">
 <div class="settings-group">
+<div class="settings-item">
+<div class="settings-label">Дни рождения</div>
+<button class="settings-link" id="birthdaysBtn">Открыть</button>
+</div>
+<div class="settings-item">
+<div class="settings-label">Отпуска</div>
+<button class="settings-link" id="vacationsBtn">Открыть</button>
+</div>
+</div>
+<div class="settings-group">
+<div class="settings-item">
+<div class="settings-label">Линии сетки</div>
+<div class="segmented">
+<button class="seg-btn" data-gridline="white">Белые</button>
+<button class="seg-btn" data-gridline="gray">Серые</button>
+</div>
+</div>
+</div>
+<div class="settings-group">
+<div class="settings-item">
+<div class="settings-label">Выборка по событиям</div>
+<button class="settings-link" id="searchBtn">Открыть</button>
+</div>
+<div class="settings-item">
+<div class="settings-label">Прошедшие (скрытые)</div>
+<button class="settings-link" id="hiddenBtn">Открыть</button>
+</div>
+</div>
+<div class="settings-group">
 
 <div class="settings-item">
   <div class="settings-label">Экспорт / Импорт</div>
@@ -128,14 +157,6 @@
   </div>
 </div>
 
-<div class="settings-item">
-<div class="settings-label">Импорт</div>
-<label class="settings-link file-label">
-                Файл
-                
-</input></label>
-</div>
-</div>
 <div class="settings-group">
 <div class="settings-item">
 <div class="settings-label">О приложении</div>
@@ -145,25 +166,6 @@
 </div>
 </div>
 </div>
-
-<!-- Backup Prompt -->
-<div aria-label="Резервная копия" class="modal hidden" id="backupModal" role="dialog">
-  <div class="modal-card">
-    <div class="modal-top">
-      <button class="text-btn outline-btn" id="closeBackupBtn">Закрыть</button>
-      <div class="modal-title">Резервная копия</div>
-      <div style="width:72px;"></div>
-    </div>
-    <div style="padding:14px 14px 6px 14px; color:#fff; opacity:0.92; font-size:14px; line-height:1.35;">
-      Пора сохранить резервную копию данных. Это поможет восстановиться, если iOS очистит локальное хранилище.
-    </div>
-    <div style="display:flex; gap:10px; padding:12px 14px 16px 14px; justify-content:flex-end;">
-      <button class="text-btn outline-btn" id="backupLaterBtn">Позже</button>
-      <button class="pill" id="backupSaveBtn">Сохранить</button>
-    </div>
-  </div>
-</div>
-
 <!-- Search -->
 <div aria-label="Выборка по событиям" class="modal hidden" id="searchModal" role="dialog">
 <div class="modal-card">
@@ -302,6 +304,6 @@
 <div aria-label="Календарь выбора даты" class="grid" id="dpGrid"></div>
 </div>
 </div>
-<script src="app.js?v=5fix33"></script>
+<script src="app.js?v=5fix34"></script>
 </body>
 </html>

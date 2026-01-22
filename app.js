@@ -76,7 +76,7 @@ window.__APP_OK__ = true;
     out.birthdays ||= [];
     out.vacations ||= [];
     out.emojiFreq ||= {};
-    out.settings ||= { gridlines: 'white', autoBackup: true, lastBackupPrompt: 0 };
+    out.settings ||= { gridlines: 'white' };
     return out;
   }
 
@@ -269,17 +269,10 @@ window.__APP_OK__ = true;
 
   // Settings
   const settingsModal = document.getElementById('settingsModal');
-  const backupModal = document.getElementById('backupModal');
-  const closeBackupBtn = document.getElementById('closeBackupBtn');
-  const backupSaveBtn = document.getElementById('backupSaveBtn');
-  const backupLaterBtn = document.getElementById('backupLaterBtn');
-
   const closeSettingsBtn = document.getElementById('closeSettingsBtn');
   const exportBtn = document.getElementById('exportBtn');
   const importBtn = document.getElementById('importBtn');
   const importInput = document.getElementById('importInput');
-  // (dedup) importInput already declared above
-
   const aboutBtn = document.getElementById('aboutBtn');
   const searchBtn = document.getElementById('searchBtn');
   const hiddenBtn = document.getElementById('hiddenBtn');
@@ -336,7 +329,6 @@ window.__APP_OK__ = true;
   const closeAboutBtn = document.getElementById('closeAboutBtn');
 
   const segBtns = Array.from(document.querySelectorAll('.seg-btn'));
-  const abBtns = Array.from(document.querySelectorAll('.ab-btn'));
 
   // --- View state ---
   const today = new Date();
@@ -359,17 +351,6 @@ window.__APP_OK__ = true;
     el.classList.add('hidden');
     if (monthPicker.classList.contains('hidden') && yearPicker.classList.contains('hidden')) hideBackdrop();
   }
-
-  // --- Haptics (best effort) ---
-  function haptic(kind='light'){
-    try{
-      if (!navigator.vibrate) return;
-      if (kind === 'success') navigator.vibrate(12);
-      else if (kind === 'warn') navigator.vibrate([10, 30, 10]);
-      else navigator.vibrate(8);
-    }catch(e){}
-  }
-
   overlayBackdrop.addEventListener('click', () => { closeOverlay(monthPicker); closeOverlay(yearPicker); closeOverlay(datePickerModal); });
   datePickerModal.addEventListener('click', (e) => { if (e.target === datePickerModal) closeOverlay(datePickerModal); });
 
@@ -1399,11 +1380,7 @@ window.__APP_OK__ = true;
 
   // --- Settings ---
   settingsBtn.addEventListener('click', () => {
-    segBtns.forEach(b => {
-      if (!b.dataset.gridline) return;
-      b.classList.toggle('active', b.dataset.gridline === state.settings.gridlines);
-    });
-    abBtns.forEach(b => b.classList.toggle('active', (b.dataset.autobackup === 'on') === !!state.settings.autoBackup));
+    segBtns.forEach(b => b.classList.toggle('active', b.dataset.gridline === state.settings.gridlines));
     openModal(settingsModal);
   });
   closeSettingsBtn.addEventListener('click', () => closeModal(settingsModal));
@@ -1421,52 +1398,25 @@ window.__APP_OK__ = true;
 
 
   segBtns.forEach(b => b.addEventListener('click', () => {
-    if (!b.dataset.gridline) return;
     state.settings.gridlines = b.dataset.gridline;
     segBtns.forEach(x => x.classList.toggle('active', x===b));
     saveState();
     render();
   }));
 
-    function exportToFile(){
-        const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        const ts = new Date();
-        a.href = url;
-        a.download = `kalendar_export_${ts.getFullYear()}${pad2(ts.getMonth()+1)}${pad2(ts.getDate())}.json`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-  }
-
-  exportBtn.addEventListener('click', () => exportToFile());
+  exportBtn.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
   if (importBtn && importInput) importBtn.addEventListener('click', () => { importInput.value=''; importInput.click(); });
-
-  // --- Auto-backup prompt (every 7 days) ---
-  function maybePromptBackup(){
-    if (!backupModal) return;
-    if (state.settings.autoBackup === false) return;
-    const WEEK = 7*24*60*60*1000;
-    const last = Number(state.settings.lastBackupPrompt || 0);
-    const now = Date.now();
-    if (now - last >= WEEK){
-      state.settings.lastBackupPrompt = now; // don't spam
-      saveState();
-      openModal(backupModal);
-    }
-  }
-
-  if (closeBackupBtn) closeBackupBtn.addEventListener('click', () => closeModal(backupModal));
-  if (backupLaterBtn) backupLaterBtn.addEventListener('click', () => closeModal(backupModal));
-  if (backupSaveBtn) backupSaveBtn.addEventListener('click', () => {
-    exportToFile();
-    haptic('success');
-    closeModal(backupModal);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ts = new Date();
+    a.href = url;
+    a.download = `kalendar_export_${ts.getFullYear()}${pad2(ts.getMonth()+1)}${pad2(ts.getDate())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   });
-  tapOutsideClose(backupModal);
-
 
   importInput.addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
@@ -1661,6 +1611,4 @@ window.__APP_OK__ = true;
     });
   }
   render();
-  // prompt backup after first paint
-  setTimeout(maybePromptBackup, 500);
 })();

@@ -409,13 +409,10 @@ input.dateInput::-webkit-calendar-picker-indicator{ opacity:0.9; }
   align-items:center;
   justify-content:flex-end;
 }
-.settings-btnrow .pill{
-  padding:8px 12px;
-}
-
-/* outlined pill buttons */
 .pill.outline-btn{
   background: transparent;
   border: 1px solid rgba(255,255,255,0.85);
-  color: #fff;
+  color:#fff;
+  padding:8px 12px;
+  border-radius:10px;
 }
