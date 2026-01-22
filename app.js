@@ -72,6 +72,9 @@ window.__APP_OK__ = true;
   function normalizeState(s) {
     const out = (s && typeof s === 'object') ? s : {};
     out.events ||= [];
+    out.events.forEach(ev => {
+      if (!ev.iconId) ev.iconId = DEFAULT_EVENT_ICON;
+    });
     out.hidden ||= [];
     out.birthdays ||= [];
     out.vacations ||= [];
@@ -542,7 +545,7 @@ window.__APP_OK__ = true;
     editingEventId = null;
     eventModalTitle.textContent = 'Новое событие';
     saveEventBtn.textContent = 'Добавить';
-    emojiPreview.textContent = '🙂';
+    setIconPreview(emojiPreview, DEFAULT_EVENT_ICON);
     titleInput.value = '';
     colorPreview.style.background = 'transparent';
     colorPreview.dataset.none = '1';
@@ -553,6 +556,7 @@ window.__APP_OK__ = true;
     if (endInputRow) endInputRow.classList.add('hidden');
     if (endDateInput) endDateInput.value = '';
     timeInput.value = '';
+    setIconPreview(emojiPreview, DEFAULT_EVENT_ICON);
     openModal(eventModal);
   }
 
@@ -560,7 +564,7 @@ window.__APP_OK__ = true;
     editingEventId = ev.id;
     eventModalTitle.textContent = 'Редактировать';
     saveEventBtn.textContent = 'Сохранить';
-    emojiPreview.textContent = ev.emoji || '🙂';
+    setIconPreview(emojiPreview, (ev.iconId || ev.iconId || eventIconId(e)) || DEFAULT_EVENT_ICON);
     titleInput.value = ev.title || '';
     if (ev.color) { colorPreview.style.background = ev.color; colorPreview.dataset.none = '0'; }
     else { colorPreview.style.background = 'transparent'; colorPreview.dataset.none = '1'; }
@@ -640,7 +644,7 @@ window.__APP_OK__ = true;
   });
 
   saveEventBtn.addEventListener('click', () => {
-    const emoji = (emojiPreview.textContent || '🙂').trim();
+    const iconId = (emojiPreview.dataset.iconId || DEFAULT_EVENT_ICON);
     const title = titleInput.value.trim();
     if (!title) { titleInput.focus(); return; }
     const color = (colorPreview.dataset.none === '1') ? null : (rgbToHex(getComputedStyle(colorPreview).backgroundColor) || null);
@@ -650,11 +654,10 @@ window.__APP_OK__ = true;
 
     if (editingEventId) {
       const ev = state.events.find(e => e.id===editingEventId);
-      if (ev) { ev.emoji=emoji; ev.title=title; ev.color=color; ev.start=start; ev.end=end; ev.time=time; }
+      if (ev) { eventIconId(ev)=emoji; ev.title=title; ev.color=color; ev.start=start; ev.end=end; ev.time=time; }
     } else {
       state.events.push({ id: uid('ev'), emoji, title, color, start, end, time });
     }
-    state.emojiFreq[emoji] = (state.emojiFreq[emoji]||0) + 1;
     saveState();
     closeModal(eventModal);
     render();
@@ -678,41 +681,56 @@ window.__APP_OK__ = true;
     return `#${r}${g}${b}`.toUpperCase();
   }
 
-  // --- Emoji picker ---
-  function topFrequent(n=12){
-    const entries = Object.entries(state.emojiFreq).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
-    const defaults = ['✅','🔥','💪','📌','🎯','🚗','🏠','🍽️','💼','🎉','❤️','📞'];
-    const seen = new Set();
-    const out = [];
-    [...entries, ...defaults].forEach(e => {
-      if (out.length>=n) return;
-      if (!seen.has(e)) { seen.add(e); out.push(e); }
-    });
-    return out;
+  
+  // --- Event icons (custom, 6 pcs) ---
+  const EVENT_ICONS = [
+    { id:'hospital', src:'assets/event-icons/hospital.png' },
+    { id:'mic',      src:'assets/event-icons/mic.png' },
+    { id:'beach',    src:'assets/event-icons/beach.png' },
+    { id:'heart',    src:'assets/event-icons/heart.png' },
+    { id:'plane',    src:'assets/event-icons/plane.png' },
+    { id:'fire',     src:'assets/event-icons/fire.png' },
+  ];
+  const DEFAULT_EVENT_ICON = 'plane';
+
+  function iconSrc(id){
+    const it = EVENT_ICONS.find(x => x.id === id);
+    return it ? it.src : EVENT_ICONS.find(x=>x.id===DEFAULT_EVENT_ICON).src;
   }
+  function makeIconImg(id, cls){
+    const img = document.createElement('img');
+    img.className = (cls || '') + ' eventIcon';
+    img.src = iconSrc(id || DEFAULT_EVENT_ICON);
+    img.alt = '';
+    img.draggable = false;
+    return img;
+  }
+  function setIconPreview(el, id){
+    if (!el) return;
+    const val = (id && String(id).trim()) ? String(id).trim() : DEFAULT_EVENT_ICON;
+    el.dataset.iconId = val;
+    el.innerHTML = '';
+    el.appendChild(makeIconImg(val, ''));
+  }
+
+// --- Icon picker (6 icons) ---
   function renderEmojiPicker(onPick){
+    // reuse same modal containers: emojiFrequent, emojiAll
     emojiFrequent.innerHTML = '';
-    topFrequent(12).forEach(e => {
-      const b = document.createElement('button');
-      b.className = 'emoji-btn';
-      b.textContent = e;
-      b.addEventListener('click', () => onPick(e));
-      emojiFrequent.appendChild(b);
-    });
     emojiAll.innerHTML = '';
-    EMOJI_ALL.forEach(e => {
+    EVENT_ICONS.forEach(ic => {
       const b = document.createElement('button');
       b.className = 'emoji-btn';
-      b.textContent = e;
-      b.addEventListener('click', () => onPick(e));
+      b.innerHTML = '';
+      b.appendChild(makeIconImg(ic.id, 'emojiBtn'));
+      b.addEventListener('click', () => {
+        popEl(b);
+        onPick(ic.id);
+      });
       emojiAll.appendChild(b);
     });
   }
 
-  emojiBtn.addEventListener('click', () => {
-    renderEmojiPicker((e) => { emojiPreview.textContent = e; closeModal(emojiPicker); });
-    openModal(emojiPicker);
-  });
   closeEmojiBtn.addEventListener('click', () => closeModal(emojiPicker));
 
   // --- Color picker ---
@@ -784,7 +802,7 @@ window.__APP_OK__ = true;
 
     const evsAll = state.events
       .filter(e => inRange(dateISO, e.start, e.end))
-      .map(e => ({ type:'event', refId:e.id, emoji:e.emoji, title:e.title, time:e.time, color:e.color, dateISO }));
+      .map(e => ({ type:'event', refId:e.id, emoji:eventIconId(e), title:e.title, time:e.time, color:e.color, dateISO }));
 
     const bdaysVisible = bdaysAll.filter(o => !isHidden('bday', o.refId, dateISO));
     const evsVisible = evsAll.filter(o => !isHidden('event', o.refId, dateISO));
@@ -905,7 +923,7 @@ window.__APP_OK__ = true;
 
       const row = document.createElement('div');
       row.className = 'eventRow';
-      row.innerHTML = `<div class="emoji">${esc(o.emoji)}</div>`
+      row.innerHTML = `<div class="emoji">${esc(o.iconId || eventIconId(e))}</div>`
         + (o.time ? `<div class="time">${esc(o.time)}</div>` : ``)
         + `<div class="title">${esc(o.title)}</div>`;
       inner.appendChild(row);
@@ -1045,7 +1063,7 @@ window.__APP_OK__ = true;
   function otherIconsForDay(dateISO, excludeRefId){
     const { evsAll } = occurrencesForDate(dateISO);
     const others = evsAll.filter(e => e.refId !== excludeRefId && !isHidden('event', e.refId, dateISO));
-    return { icons: others.slice(0,3).map(o=>o.emoji), more: others.length>3 };
+    return { icons: others.slice(0,3).map(o=>o.iconId || eventIconId(e)), more: others.length>3 };
   }
 
   function renderSearch(){
@@ -1072,9 +1090,9 @@ window.__APP_OK__ = true;
       state.events.forEach(e => {
         if (!inRange(iso, e.start, e.end)) return;
         if (isHidden('event', e.id, iso)) return;
-        if (searchEmoji && e.emoji !== searchEmoji) return;
+        if (searchEmoji && eventIconId(e) !== searchEmoji) return;
         if (q && !e.title.toLowerCase().includes(q)) return;
-        results.push({ type:'event', refId:e.id, emoji:e.emoji, title:e.title, dateISO: iso, start:e.start, end:e.end });
+        results.push({ type:'event', refId:e.id, emoji:eventIconId(e), title:e.title, dateISO: iso, start:e.start, end:e.end });
       });
     }
 
@@ -1177,7 +1195,7 @@ window.__APP_OK__ = true;
       let label = '';
       if (h.type==='event') {
         const ev = state.events.find(e => e.id===h.refId);
-        label = ev ? `${formatRu(h.dateISO)} — ${ev.emoji} ${ev.title}` : `${formatRu(h.dateISO)} — (удалено)`;
+        label = ev ? `${formatRu(h.dateISO)} — ${eventIconId(ev)} ${ev.title}` : `${formatRu(h.dateISO)} — (удалено)`;
       } else {
         const b = state.birthdays.find(x => x.id===h.refId);
         label = `${formatRu(h.dateISO)} — 🎂 ${b ? b.name : '(удалено)'}`;
