@@ -260,9 +260,21 @@ window.__APP_OK__ = true;
   const emojiPicker = document.getElementById('emojiPicker');
   const closeEmojiBtn = document.getElementById('closeEmojiBtn');
   const emojiFrequent = document.getElementById('emojiFrequent');
-  // Hide 'Frequent' section in emoji/icon picker
-  try { const sec = emojiFrequent && emojiFrequent.closest && emojiFrequent.closest('.emoji-section'); if (sec) sec.style.display = 'none'; } catch(e) {}
+  // ✅ Убираем блок «Частые» полностью (без ошибок)
+  if (emojiFrequent) {
+    const sec = emojiFrequent.closest('.emoji-section');
+    if (sec) sec.style.display = 'none';
+  }
 
+  // ✅ Увеличиваем иконки в календаре (1.3×) безопасно через CSS-инъекцию
+  (function(){
+    const s = document.createElement('style');
+    s.textContent = `
+      .calendar .icons img.eventIcon{width:22px;height:22px;object-fit:contain;}
+      .calendar .icons img.eventIcon.small{transform:scale(0.85);transform-origin:center;}
+    `;
+    document.head.appendChild(s);
+  })();
   const emojiAll = document.getElementById('emojiAll');
 
   // Color picker
@@ -744,7 +756,7 @@ window.__APP_OK__ = true;
   }
   function renderEmojiPicker(onPick){
     // Icons-only picker (PNG pack)
-    emojiFrequent.innerHTML = '';
+    if (emojiFrequent) emojiFrequent.innerHTML = '';
     emojiAll.innerHTML = '';
 
     ICON_IDS.forEach(id => {
