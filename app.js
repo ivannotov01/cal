@@ -260,21 +260,6 @@ window.__APP_OK__ = true;
   const emojiPicker = document.getElementById('emojiPicker');
   const closeEmojiBtn = document.getElementById('closeEmojiBtn');
   const emojiFrequent = document.getElementById('emojiFrequent');
-  // ✅ Убираем блок «Частые» полностью (без ошибок)
-  if (emojiFrequent) {
-    const sec = emojiFrequent.closest('.emoji-section');
-    if (sec) sec.style.display = 'none';
-  }
-
-  // ✅ Увеличиваем иконки в календаре (1.3×) безопасно через CSS-инъекцию
-  (function(){
-    const s = document.createElement('style');
-    s.textContent = `
-      .calendar .icons img.eventIcon{width:22px;height:22px;object-fit:contain;}
-      .calendar .icons img.eventIcon.small{transform:scale(0.85);transform-origin:center;}
-    `;
-    document.head.appendChild(s);
-  })();
   const emojiAll = document.getElementById('emojiAll');
 
   // Color picker
@@ -569,7 +554,7 @@ window.__APP_OK__ = true;
     editingEventId = null;
     eventModalTitle.textContent = 'Новое событие';
     saveEventBtn.textContent = 'Добавить';
-    setValuePreview(emojiPreview, DEFAULT_ICON);
+    setValuePreview(emojiPreview, CUSTOM_ICON_PLANE);
     titleInput.value = '';
     colorPreview.style.background = 'transparent';
     colorPreview.dataset.none = '1';
@@ -587,7 +572,7 @@ window.__APP_OK__ = true;
     editingEventId = ev.id;
     eventModalTitle.textContent = 'Редактировать';
     saveEventBtn.textContent = 'Сохранить';
-    setValuePreview(emojiPreview, ev.emoji || DEFAULT_ICON);
+    setValuePreview(emojiPreview, ev.emoji || CUSTOM_ICON_PLANE);
     titleInput.value = ev.title || '';
     if (ev.color) { colorPreview.style.background = ev.color; colorPreview.dataset.none = '0'; }
     else { colorPreview.style.background = 'transparent'; colorPreview.dataset.none = '1'; }
@@ -667,7 +652,7 @@ window.__APP_OK__ = true;
   });
 
   saveEventBtn.addEventListener('click', () => {
-    const emoji = (emojiPreview.dataset.value || DEFAULT_ICON);
+    const emoji = (emojiPreview.dataset.value || CUSTOM_ICON_PLANE);
     const title = titleInput.value.trim();
     if (!title) { titleInput.focus(); return; }
     const color = (colorPreview.dataset.none === '1') ? null : (rgbToHex(getComputedStyle(colorPreview).backgroundColor) || null);
@@ -706,23 +691,18 @@ window.__APP_OK__ = true;
   }
 
   
-  // --- Custom icons (PNG pack) ---
+  // --- Custom icon (test: plane only) ---
   const ICON_VALUE_PREFIX = 'ic:';
-  const ICON_IDS = ['mic', 'book', 'beach', 'bed', 'plane', 'money', 'soccer', 'puck', 'walk', 'dance', 'beers', 'cutlery', 'coffee', 'piano', 'syringe', 'pen', 'car', 'home', 'dacha', 'taxi', 'bus', 'snow', 'cinema', 'sun', 'phone', 'cart', 'train', 'heart', 'notebook', 'picnic', 'tooth'];
-  const DEFAULT_ICON = ICON_VALUE_PREFIX + 'plane';
-
+  const CUSTOM_ICON_PLANE = ICON_VALUE_PREFIX + 'plane';
   function isIconValue(v){ return typeof v === 'string' && v.startsWith(ICON_VALUE_PREFIX); }
-  function iconIdFromValue(v){ return isIconValue(v) ? v.slice(ICON_VALUE_PREFIX.length) : null; }
   function iconSrcByValue(v){
-    const id = iconIdFromValue(v);
-    if (!id) return null;
-    return `assets/event-icons/${id}.png`;
+    if (v === CUSTOM_ICON_PLANE) return 'assets/event-icons/plane.png';
+    return null;
   }
-
   function makeValueNode(v, cls){
     if (isIconValue(v)){
       const img = document.createElement('img');
-      img.className = ((cls || '') + ' eventIcon').trim();
+      img.className = (cls || '') + ' eventIcon';
       img.src = iconSrcByValue(v) || '';
       img.alt = '';
       img.draggable = false;
@@ -733,10 +713,9 @@ window.__APP_OK__ = true;
     sp.textContent = v || '•';
     return sp;
   }
-
   function setValuePreview(el, v){
     if (!el) return;
-    const val = v || DEFAULT_ICON;
+    const val = v || CUSTOM_ICON_PLANE;
     el.dataset.value = val;
     el.innerHTML = '';
     el.appendChild(makeValueNode(val, 'emojiBtn'));
@@ -755,21 +734,18 @@ window.__APP_OK__ = true;
     return out;
   }
   function renderEmojiPicker(onPick){
-    // Icons-only picker (PNG pack)
-    if (emojiFrequent) emojiFrequent.innerHTML = '';
+    // Only one custom icon for now (plane)
+    emojiFrequent.innerHTML = '';
     emojiAll.innerHTML = '';
-
-    ICON_IDS.forEach(id => {
-      const v = ICON_VALUE_PREFIX + id;
-      const b = document.createElement('button');
-      b.className = 'emoji-btn';
-      b.appendChild(makeValueNode(v, 'emojiBtn'));
-      b.addEventListener('click', () => {
-        popEl(b);
-        onPick(v);
-      });
-      emojiAll.appendChild(b);
+    const b = document.createElement('button');
+    b.className = 'emoji-btn';
+    b.innerHTML = '';
+    b.appendChild(makeValueNode(CUSTOM_ICON_PLANE, 'emojiBtn'));
+    b.addEventListener('click', () => {
+      popEl(b);
+      onPick(CUSTOM_ICON_PLANE);
     });
+    emojiAll.appendChild(b);
   }
 
   emojiBtn.addEventListener('click', () => {
@@ -971,24 +947,9 @@ window.__APP_OK__ = true;
 
       const row = document.createElement('div');
       row.className = 'eventRow';
-      // build row
-      const emojiDiv = document.createElement('div');
-      emojiDiv.className = 'emoji';
-      emojiDiv.appendChild(makeValueNode(o.emoji));
-      row.appendChild(emojiDiv);
-
-      if (o.time) {
-        const timeDiv = document.createElement('div');
-        timeDiv.className = 'time';
-        timeDiv.textContent = o.time;
-        row.appendChild(timeDiv);
-      }
-
-      const titleDiv = document.createElement('div');
-      titleDiv.className = 'title';
-      titleDiv.textContent = o.title;
-      row.appendChild(titleDiv);
-
+      row.innerHTML = `<div class="emoji">${esc(o.emoji)}</div>`
+        + (o.time ? `<div class="time">${esc(o.time)}</div>` : ``)
+        + `<div class="title">${esc(o.title)}</div>`;
       inner.appendChild(row);
 
       // long press = edit
@@ -1089,18 +1050,17 @@ window.__APP_OK__ = true;
         cell.appendChild(b);
       }
 
-      // Event icons in cell (max 2 + ..), hidden occurrences are not shown
+      // Event icons in cell (max 3 + ..), hidden occurrences are not shown
       const icons = document.createElement('div');
       icons.className = 'icons';
       const visibleEvs = occ.evsAll.filter(e => !isHidden('event', e.refId, iso));
-
       visibleEvs.slice(0,2).forEach((o, idx) => {
-        const node = makeValueNode(o.emoji);
-        if (idx >= 1) node.classList.add('small'); // second icon slightly smaller
-        if (isTail) node.classList.add('muted');
-        icons.appendChild(node);
+        const s = document.createElement('span');
+        s.textContent = o.emoji;
+        if (idx >= 2) s.classList.add('small');
+        if (isTail) s.className = 'muted';
+        icons.appendChild(s);
       });
-
       if (visibleEvs.length > 2) {
         const dots = document.createElement('span');
         dots.className = 'dots' + (isTail ? ' muted' : '');
@@ -1169,37 +1129,25 @@ window.__APP_OK__ = true;
       const row = document.createElement('div');
       row.className = 'listRow' + (isPast ? ' past' : '');
 
-      const left = document.createElement('div');
-      left.className = 'left';
-
-      // left side: date/range + icon + title
-      const textSpan = document.createElement('span');
-      textSpan.className = 'leftText';
-
+      let leftText = '';
       if (r.type==='event') {
-        const iconNode = makeValueNode(r.emoji);
-        iconNode.classList.add('inlineIcon');
-        left.appendChild(iconNode);
-
-        if (r.end) textSpan.textContent = `С: ${formatRu(r.start)} По: ${formatRu(r.end)} — ${r.title}`;
-        else textSpan.textContent = `${formatRu(r.dateISO)} — ${r.title}`;
+        if (r.end) leftText = `С: ${formatRu(r.start)} По: ${formatRu(r.end)} — ${r.emoji} ${r.title}`;
+        else leftText = `${formatRu(r.dateISO)} — ${r.emoji} ${r.title}`;
       } else {
-        const cake = document.createElement('span');
-        cake.className = 'emoji';
-        cake.textContent = '🎂';
-        left.appendChild(cake);
-        textSpan.textContent = `${formatRu(r.dateISO)} — ${r.title}`;
+        leftText = `${formatRu(r.dateISO)} — 🎂 ${r.title}`;
       }
 
-      left.appendChild(textSpan);
+      const left = document.createElement('div');
+      left.className = 'left';
+      left.textContent = leftText;
 
       const right = document.createElement('div');
       right.className = 'rightIcons';
       const oi = otherIconsForDay(r.dateISO, r.type==='event' ? r.refId : null);
       oi.icons.forEach(e => {
-        const node = makeValueNode(e);
-        node.classList.add('mini');
-        right.appendChild(node);
+        const s = document.createElement('span');
+        s.textContent = e;
+        right.appendChild(s);
       });
       if (oi.more) {
         const s = document.createElement('span');
@@ -1236,7 +1184,7 @@ window.__APP_OK__ = true;
   searchEmojiBtn.addEventListener('click', () => {
     renderEmojiPicker((e) => {
       searchEmoji = e;
-      searchEmojiPreview.innerHTML=''; searchEmojiPreview.appendChild(makeValueNode(e));
+      searchEmojiPreview.textContent = e;
       closeModal(emojiPicker);
       renderSearch();
     });
@@ -1269,18 +1217,15 @@ window.__APP_OK__ = true;
       row.className = 'listRow past';
 
       let label = '';
-      let iconVal = null;
       if (h.type==='event') {
         const ev = state.events.find(e => e.id===h.refId);
-        iconVal = ev ? ev.emoji : null;
-        label = ev ? `${formatRu(h.dateISO)} — ${ev.title}` : `${formatRu(h.dateISO)} — (удалено)`;
+        label = ev ? `${formatRu(h.dateISO)} — ${ev.emoji} ${ev.title}` : `${formatRu(h.dateISO)} — (удалено)`;
       } else {
         const b = state.birthdays.find(x => x.id===h.refId);
         label = `${formatRu(h.dateISO)} — 🎂 ${b ? b.name : '(удалено)'}`;
       }
 
       row.innerHTML = `<div class="left">${esc(label)}</div><div class="rightIcons"></div>`;
-      try{ if (iconVal){ const leftEl = row.querySelector('.left'); if (leftEl){ const n = makeValueNode(iconVal); n.classList.add('inlineIcon'); leftEl.prepend(n); } } }catch(e){}
 
       // swipe right = restore occurrence; swipe left = remove from hidden list
       const wrap = makeSwipeRow(row,
