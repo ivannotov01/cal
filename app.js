@@ -260,6 +260,9 @@ window.__APP_OK__ = true;
   const emojiPicker = document.getElementById('emojiPicker');
   const closeEmojiBtn = document.getElementById('closeEmojiBtn');
   const emojiFrequent = document.getElementById('emojiFrequent');
+  // Hide 'Frequent' section in emoji/icon picker
+  try { const sec = emojiFrequent && emojiFrequent.closest && emojiFrequent.closest('.emoji-section'); if (sec) sec.style.display = 'none'; } catch(e) {}
+
   const emojiAll = document.getElementById('emojiAll');
 
   // Color picker
